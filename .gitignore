@@ -1,0 +1,10 @@
+*.xcodeproj/
+*.obj
+bin
+obj
+*.o
+*.lib
+*.dylib
+*.a
+*.so
+*.exe
