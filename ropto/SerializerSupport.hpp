@@ -15,7 +15,7 @@
 namespace ropto
 {
     template<class T>
-    class serializer<T, true>
+    class serializer<T, true, false, false>
     {
     public:
         static T from_bytes(byte_stream& stream)
@@ -33,27 +33,112 @@ namespace ropto
         }
     };
     
-    template<>
-    class serializer<int>
+    template<class Integral>
+    class serializer<Integral, true, true, false>
     {
     public:
-        static int from_bytes(byte_stream& stream)
+        static Integral from_bytes(byte_stream& stream)
         {
-            int value = 0;
-            for(int i = 3; i >= 0; i--)
+            Integral value = 0;
+            for(size_t i = sizeof(Integral); i > 0; i--)
             {
-                value += stream.fetch() << (8*i);
+                value += static_cast<Integral>(stream.fetch()) << (8*(i-1));
             }
             return value;
         }
         
-        static void to_bytes(const int& value, byte_stream& stream)
+        static void to_bytes(const Integral& value, byte_stream& stream)
         {
-            for(int i = 3; i >= 0; i--)
+            for(size_t i = sizeof(Integral); i > 0; i--)
             {
-                uint8_t byte = (value >> (8*i)) & 0xFF;
+                uint8_t byte = (value >> (8*(i-1))) & 0xFF;
                 stream.append(byte);
             }
+        }
+    };
+    
+    template<class T, int size=sizeof(T)>
+    union Integral;
+    
+    template<class T>
+    union Integral<T, 1> {int8_t i; T t;};
+    
+    template<class T>
+    union Integral<T, 2> { int16_t i; T t; };
+    
+    template<class T>
+    union Integral<T, 4> { int32_t i; T t; };
+    
+    template<class T>
+    union Integral<T, 8> { int64_t i; T t; };
+    
+    template<class T>
+    union Integral<T, 16> { __int128_t i; T t; };
+    
+    template<class Floating>
+    class serializer<Floating, true, false, true>
+    {
+        typedef Integral<Floating> Int;
+    public:
+        static Floating from_bytes(byte_stream& stream)
+        {
+            Int value {};
+            read(value.i, stream);
+            return value.t;
+        }
+        static void to_bytes(const Floating& value, byte_stream& stream)
+        {
+            Int ivalue {};
+            ivalue.t = value;
+            write(ivalue.i, stream);
+        }
+    };
+    
+    template<class T>
+    class serializer<std::vector<T>, false, false, false>
+    {
+    public:
+        static std::vector<T> from_bytes(byte_stream& stream)
+        {
+            size_t count = read<size_t>(stream);
+            std::vector<T> value{};
+            value.reserve(count);
+            for (int i = 0; i < count; i++)
+            {
+                value.push_back(read<T>(stream));
+            }
+            return value;
+        }
+        
+        static void to_bytes(const std::vector<T>& value, byte_stream& stream)
+        {
+            write(value.size(), stream);
+            for (auto item: value)
+                write(item, stream);
+        }
+    };
+    
+    template<class T>
+    class serializer<std::basic_string<T>, false, false, false>
+    {
+    public:
+        static std::basic_string<T> from_bytes(byte_stream& stream)
+        {
+            size_t count = read<size_t>(stream);
+            std::basic_string<T> value;
+            value.reserve(count);
+            for (int i = 0; i < count; i++)
+            {
+                value.append(1, read<T>(stream));
+            }
+            return value;
+        }
+        
+        static void to_bytes(const std::basic_string<T>& value, byte_stream& stream)
+        {
+            write(value.size(), stream);
+            for (T character: value)
+                write(character, stream);
         }
     };
 }
