@@ -17,7 +17,7 @@ struct employee
 
 struct department
 {
-    std::string title;
+    optional<std::string> title;
     std::vector<employee> people;
 };
 
@@ -59,7 +59,7 @@ int main(int argc, const char * argv[]) {
     byte_stream stream;
     
     department x {
-        "TechDept",
+        {},
         {
             {1, "Kimmy", 1200.00},
             {2, "Joey", 1500.00},
@@ -79,7 +79,7 @@ int main(int argc, const char * argv[]) {
     
     auto y = read<department>(stream);
     
-    std::cout << y.title << " => ";
+    std::cout << y.title.value() << " => ";
     for (auto people: y.people)
         std::cout  << people.name << ", ";
     std::cout << std::endl;

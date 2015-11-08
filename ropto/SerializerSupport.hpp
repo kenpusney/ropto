@@ -11,6 +11,8 @@
 
 #include "BinaryRetriver.hpp"
 #include "Serializer.hpp"
+#include "Optional.hpp"
+
 
 namespace ropto
 {
@@ -139,6 +141,28 @@ namespace ropto
             write(value.size(), stream);
             for (T character: value)
                 write(character, stream);
+        }
+    };
+    
+    template<class T>
+    class serializer<optional<T>, false, false, false>
+    {
+    public:
+        static optional<T> from_bytes(byte_stream& stream)
+        {
+            T value;
+            bool valid = false;
+            read(stream, valid);
+            if (valid)
+                read(stream, value);
+            return valid ? optional<T>{value} : optional<T> {};
+        }
+        
+        static void to_bytes(const optional<T>& value, byte_stream& stream)
+        {
+            write(static_cast<bool>(value), stream);
+            if(value)
+                write(value.value(), stream);
         }
     };
 }
