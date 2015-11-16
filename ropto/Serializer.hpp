@@ -1,10 +1,3 @@
-//
-//  Serializer.hpp
-//  ropto
-//
-//  Created by Kimmy  on 11/7/15.
-//  Copyright (c) 2015 TDCA. All rights reserved.
-//
 
 #ifndef ropto_Serializer_hpp
 #define ropto_Serializer_hpp
