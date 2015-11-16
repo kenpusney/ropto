@@ -5,6 +5,7 @@
 #include <cassert>
 
 #include "ropto.hpp"
+#include "Compress.hpp"
 
 using namespace ropto;
 
@@ -75,11 +76,28 @@ int main(int argc, const char * argv[]) {
     
     byte_stream decoded;
     
+    std::string str {};
+    
+    str.append(100000000, 'a');
+    
     decoded.iterate() = base64_decode(base64);
     
+    std::cout << "Before compress, size is: " << decoded.iterate().size() << std::endl;
+
+    compressed cmp;
+    
+    cmp.compress(decoded.iterate());
+    
+    std::cout << "After compress, size is: " << cmp.data().size() << std::endl;
+    
+    decoded.iterate() = cmp.extract();
+    
+    std::cout << "After extract, size is: " << decoded.iterate().size() << std::endl;
+
+
     auto y = read<department>(stream);
     
-    std::cout << y.title.value() << " => ";
+    std::cout << y.title.value() << "=> ";
     for (auto people: y.people)
         std::cout  << people.name << ", ";
     std::cout << std::endl;
