@@ -6,11 +6,13 @@
 
 #include "ropto.hpp"
 #include "Compress.hpp"
+#include "Service.hpp"
 
 using namespace ropto;
 
 struct employee
 {
+    static constexpr unsigned int type_id = 0x01;
     int number;
     std::string name;
     double salary;
@@ -18,6 +20,7 @@ struct employee
 
 struct department
 {
+    static constexpr unsigned int type_id = 0x02;
     optional<std::string> title;
     std::vector<employee> people;
 };
@@ -63,42 +66,23 @@ int main(int argc, const char * argv[]) {
         {},
         {
             {1, "Kimmy", 1200.00},
-            {2, "Joey", 1500.00},
-            {3, "Angi", 1700.00}
+            {2, "Joey", 1500.00}
         }
     };
     
-    write(x, stream);
+    employee emp {3, "Angi", 1700.00};
     
-    auto base64 = base64_encode(stream.iterate());
+    auto service = make_service<employee, department>([x](const employee& emp, department& dept)
+                 {
+                     dept = x;
+                     dept.people.push_back(emp);
+                 });
     
-    std::cout<<base64<<std::endl;
+    auto message = service->process(make_message(emp));
     
-    byte_stream decoded;
+    auto dept = read<department>(*message.stream());
     
-    std::string str {};
-    
-    str.append(100000000, 'a');
-    
-    decoded.iterate() = base64_decode(base64);
-    
-    std::cout << "Before compress, size is: " << decoded.iterate().size() << std::endl;
-
-    compressed cmp;
-    
-    cmp.compress(decoded.iterate());
-    
-    std::cout << "After compress, size is: " << cmp.data().size() << std::endl;
-    
-    decoded.iterate() = cmp.extract();
-    
-    std::cout << "After extract, size is: " << decoded.iterate().size() << std::endl;
-
-
-    auto y = read<department>(stream);
-    
-    std::cout << y.title.value() << "=> ";
-    for (auto people: y.people)
-        std::cout  << people.name << ", ";
-    std::cout << std::endl;
+    for (auto emp: dept.people) {
+        std::cout << emp.name << std::endl;
+    }
 }

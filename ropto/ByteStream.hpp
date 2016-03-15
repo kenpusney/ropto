@@ -14,10 +14,11 @@
 namespace ropto
 {
     
+    typedef std::vector<uint8_t> bytes_t;
+    
     class byte_stream
     {
-        typedef std::vector<uint8_t> bytes_t;
-        std::vector<uint8_t> bytes {};
+        bytes_t bytes {};
         int index = 0;
     public:
         byte_stream();
