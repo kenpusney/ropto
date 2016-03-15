@@ -13,7 +13,7 @@ namespace ropto
     
     uint8_t byte_stream::fetch()
     {
-        return bytes.at(index++);
+        return bytes[index++];
     }
     
     std::vector<uint8_t>& byte_stream::iterate() {return bytes;}

@@ -3,6 +3,7 @@
 #define ropto_SerializerSupport_hpp
 
 #include <iterator>
+#include <map>
 
 #include "BinaryRetriver.hpp"
 #include "Serializer.hpp"
@@ -114,6 +115,41 @@ namespace ropto
     };
     
     template<class Container>
+    struct OutIter
+    {
+        typedef std::true_type is_back_insertable;
+        typedef std::back_insert_iterator<Container> type;
+    };
+    
+    template<class K, class V>
+    struct OutIter<std::map<K, V>>
+    {
+        typedef std::false_type is_back_insertable;
+        typedef std::insert_iterator<std::map<K, V>> type;
+    };
+    
+    template<class Container>
+    using OutIter_t = typename OutIter<Container>::type;
+    
+    template<class Container>
+    OutIter_t<Container> InserterOf(Container& container, std::false_type)
+    {
+        return std::inserter(container, end(container));
+    }
+    
+    template<class Container>
+    OutIter_t<Container> InserterOf(Container& container, std::true_type)
+    {
+        return std::back_inserter(container);
+    }
+    
+    template<class Container>
+    OutIter_t<Container> Inserter(Container& container)
+    {
+        return InserterOf(container, typename OutIter<Container>::is_back_insertable {});
+    }
+    
+    template<class Container>
     class serializer<Container, false, false, false>
     {
     public:
@@ -121,7 +157,7 @@ namespace ropto
         {
             Container container;
             auto count = read<size_t>(stream);
-            std::generate_n(std::inserter(container, begin(container)), count, [&stream]()
+            std::generate_n(Inserter(container), count, [&stream]()
             {
                 return read<typename Container::value_type>(stream);
             });

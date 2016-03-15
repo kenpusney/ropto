@@ -16,7 +16,6 @@ namespace ropto
         binary_retriver() {}
         binary_retriver(const T& _value): value(_value) {}
     };
-    
 
 }
 

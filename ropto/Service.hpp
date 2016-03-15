@@ -20,7 +20,7 @@
 namespace ropto
 {
     
-    struct message_buffer
+    struct message_buf
     {
         unsigned int type_id;
         bytes_t bytes;
@@ -34,26 +34,26 @@ namespace ropto
     };
     
     template<class T>
-    message_buffer make_message(T& object)
+    message_buf make_message(T& object)
     {
         byte_stream stream;
         write(stream, object);
         
-        return message_buffer {T::type_id, stream.iterate()};
+        return message_buf {T::type_id, stream.iterate()};
     }
     
     template<>
-    class serializer<message_buffer>
+    class serializer<message_buf>
     {
     public:
-        static message_buffer from_bytes(byte_stream& stream)
+        static message_buf from_bytes(byte_stream& stream)
         {
-            message_buffer mb;
+            message_buf mb;
             read(stream, mb.type_id, mb.bytes);
             return mb;
         }
         
-        static void to_bytes(const message_buffer& mb, byte_stream& stream)
+        static void to_bytes(const message_buf& mb, byte_stream& stream)
         {
             write(stream, mb.type_id, mb.bytes);
         }
@@ -73,13 +73,11 @@ namespace ropto
         service(std::function<void(Tin&, Tout&)> fn): handler(fn) {};
         service(const service&) = delete;
         
-        message_buffer process(const message_buffer& mb)
+        message_buf process(const message_buf& mb)
         {
             assert(mb.type_id == type_in);
             Tout out {};
-            
             auto in = read<Tin>(*mb.stream());
-            
             handler(in, out);
             
             return make_message(out);
@@ -87,7 +85,7 @@ namespace ropto
     };
     
     template<class Tin, class Tout = Tin>
-    std::shared_ptr<service<Tin, Tout>> make_service(std::function<void(const Tin&, Tout&)> fn)
+    std::shared_ptr<service<Tin, Tout>> make_service(std::function<void(Tin&, Tout&)> fn)
     {
         return std::make_shared<service<Tin, Tout>>(fn);
     }

@@ -71,32 +71,23 @@ int main(int argc, const char * argv[]) {
         }
     };
     
-    employee emp{3, "Angi", 1700.00};
+    std::vector<employee> emp {};
+    int v = 0;
+    std::generate_n(back_inserter(emp), 10000000, [&v](){
+        return employee{v++, "Angi", 1700.0 * v};
+    });
     
-    auto service = make_service<employee, department>([x](const employee& emp, department& dept)
-                 {
-                     dept = x;
-                     dept.people[emp.number] = (emp);
-                 });
     
-    auto message = service->process(make_message(emp));
+    write(emp, stream);
     
-    auto dept = read<department>(*message.stream());
     
-    for (auto emp: dept.people) {
-        std::cout << emp.second.name << std::endl;
-    }
+    byte_stream stm;
     
-//    std::map<std::string, int> map {{"a", 2}};
-//    
-//    byte_stream stm;
-//    
-//    write(map, stm);
-//    
-//    byte_stream stm2;
-//    stm2.iterate() = stm.iterate();
-//    
-//    read(stm, map);
-//    
-//    std::cout << map["a"];
+    stm.iterate() = stream.iterate();
+    
+    std::vector<employee> emp2 {};
+    
+    read(stm, emp2);
+    
+    std::cout<< emp2.size();
 }
