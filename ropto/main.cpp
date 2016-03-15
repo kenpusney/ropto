@@ -3,6 +3,7 @@
 #include <iostream>
 #include <iterator>
 #include <cassert>
+#include <map>
 
 #include "ropto.hpp"
 #include "Service.hpp"
@@ -21,7 +22,7 @@ struct department
 {
     static constexpr unsigned int type_id = 0x02;
     optional<std::string> title;
-    std::vector<employee> people;
+    std::map<int, employee> people;
 };
 
 template<>
@@ -40,6 +41,7 @@ public:
         stream << value.number << value.name << value.salary;
     }
 };
+
 template<>
 class serializer<department>
 {
@@ -64,17 +66,17 @@ int main(int argc, const char * argv[]) {
     department x {
         {},
         {
-            {1, "Kimmy", 1200.00},
-            {2, "Joey", 1500.00}
+            {1, {1, "Kimmy", 1200.00}},
+            {2, {2, "Joey", 1500.00}}
         }
     };
     
-    employee emp {3, "Angi", 1700.00};
+    employee emp{3, "Angi", 1700.00};
     
     auto service = make_service<employee, department>([x](const employee& emp, department& dept)
                  {
                      dept = x;
-                     dept.people.push_back(emp);
+                     dept.people[emp.number] = (emp);
                  });
     
     auto message = service->process(make_message(emp));
@@ -82,6 +84,19 @@ int main(int argc, const char * argv[]) {
     auto dept = read<department>(*message.stream());
     
     for (auto emp: dept.people) {
-        std::cout << emp.name << std::endl;
+        std::cout << emp.second.name << std::endl;
     }
+    
+//    std::map<std::string, int> map {{"a", 2}};
+//    
+//    byte_stream stm;
+//    
+//    write(map, stm);
+//    
+//    byte_stream stm2;
+//    stm2.iterate() = stm.iterate();
+//    
+//    read(stm, map);
+//    
+//    std::cout << map["a"];
 }

@@ -2,6 +2,8 @@
 #ifndef ropto_SerializerSupport_hpp
 #define ropto_SerializerSupport_hpp
 
+#include <iterator>
+
 #include "BinaryRetriver.hpp"
 #include "Serializer.hpp"
 #include "Optional.hpp"
@@ -34,7 +36,7 @@ namespace ropto
     public:
         static Integral from_bytes(byte_stream& stream)
         {
-            Integral value = 0;
+            std::decay_t<Integral> value = 0;
             for(size_t i = sizeof(Integral); i > 0; i--)
             {
                 value += static_cast<Integral>(stream.fetch()) << (8*(i-1));
@@ -111,30 +113,47 @@ namespace ropto
         }
     };
     
-    template<class Iterable>
-    class serializer<Iterable, false, false, false>
+    template<class Container>
+    class serializer<Container, false, false, false>
     {
     public:
-        static Iterable from_bytes(byte_stream& stream)
+        static Container from_bytes(byte_stream& stream)
         {
-            Iterable iter;
+            Container container;
             auto count = read<size_t>(stream);
-            std::generate_n(std::back_inserter(iter), count, [&stream]()
+            std::generate_n(std::inserter(container, begin(container)), count, [&stream]()
             {
-                return read<typename Iterable::value_type>(stream);
+                return read<typename Container::value_type>(stream);
             });
             
-            return iter;
+            return container;
         }
         
-        static void to_bytes(const Iterable& iter, byte_stream& stream)
+        static void to_bytes(const Container& container, byte_stream& stream)
         {
-            write(iter.size(), stream);
-            for (auto item: iter)
+            write(container.size(), stream);
+            for (auto item: container)
                 write(item, stream);
         }
     };
     
+    template<class K, class V>
+    class serializer<std::pair<K, V>, false, false, false>
+    {
+    public:
+        static std::pair<K, V> from_bytes(byte_stream& stream)
+        {
+            auto first = read<std::decay_t<K>>(stream);
+            auto second = read<V>(stream);
+            return std::make_pair(first, second);
+        }
+        
+        static void to_bytes(const std::pair<K, V>& pair, byte_stream& stream)
+        {
+            write(pair.first, stream);
+            write(pair.second, stream);
+        }
+    };
 
 }
 
