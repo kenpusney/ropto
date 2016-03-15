@@ -90,54 +90,6 @@ namespace ropto
     };
     
     template<class T>
-    class serializer<std::vector<T>, false, false, false>
-    {
-    public:
-        static std::vector<T> from_bytes(byte_stream& stream)
-        {
-            size_t count = read<size_t>(stream);
-            std::vector<T> value{};
-            value.reserve(count);
-            for (int i = 0; i < count; i++)
-            {
-                value.push_back(read<T>(stream));
-            }
-            return value;
-        }
-        
-        static void to_bytes(const std::vector<T>& value, byte_stream& stream)
-        {
-            write(value.size(), stream);
-            for (auto item: value)
-                write(item, stream);
-        }
-    };
-    
-    template<class T>
-    class serializer<std::basic_string<T>, false, false, false>
-    {
-    public:
-        static std::basic_string<T> from_bytes(byte_stream& stream)
-        {
-            size_t count = read<size_t>(stream);
-            std::basic_string<T> value;
-            value.reserve(count);
-            for (int i = 0; i < count; i++)
-            {
-                value.append(1, read<T>(stream));
-            }
-            return value;
-        }
-        
-        static void to_bytes(const std::basic_string<T>& value, byte_stream& stream)
-        {
-            write(value.size(), stream);
-            for (T character: value)
-                write(character, stream);
-        }
-    };
-    
-    template<class T>
     class serializer<optional<T>, false, false, false>
     {
     public:
@@ -158,6 +110,32 @@ namespace ropto
                 write(value.value(), stream);
         }
     };
+    
+    template<class Iterable>
+    class serializer<Iterable, false, false, false>
+    {
+    public:
+        static Iterable from_bytes(byte_stream& stream)
+        {
+            Iterable iter;
+            auto count = read<size_t>(stream);
+            std::generate_n(std::back_inserter(iter), count, [&stream]()
+            {
+                return read<typename Iterable::value_type>(stream);
+            });
+            
+            return iter;
+        }
+        
+        static void to_bytes(const Iterable& iter, byte_stream& stream)
+        {
+            write(iter.size(), stream);
+            for (auto item: iter)
+                write(item, stream);
+        }
+    };
+    
+
 }
 
 #endif
