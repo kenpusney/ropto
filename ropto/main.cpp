@@ -5,7 +5,6 @@
 #include <cassert>
 
 #include "ropto.hpp"
-#include "Compress.hpp"
 #include "Service.hpp"
 
 using namespace ropto;
