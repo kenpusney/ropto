@@ -11,3 +11,6 @@ obj
 *.out
 .DS_Store
 *_test
+run_*
+*.dylib
+
